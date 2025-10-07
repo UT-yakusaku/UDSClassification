@@ -1,5 +1,6 @@
 import pyabf
 import h5py
+import pickle
 import numpy as np
 from scipy.signal import butter, filtfilt
 from scipy.stats import zscore
@@ -64,4 +65,11 @@ def load_spectrogram(path, id_to_no):
         all_data.append(data)
 
     f.close()
+    return all_data
+
+
+def load_stft(path):
+    with open(path, "rb") as f:
+        all_data = pickle.load(f)
+
     return all_data
