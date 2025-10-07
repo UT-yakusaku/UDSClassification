@@ -54,29 +54,51 @@ class CnnRnnModel(nn.Module):
     
 
 class RnnModel(nn.Module):
-    def __init__(self, input_size=256, rnn_units=64, rnn_type="lstm"):
+    def __init__(self, input_size=256, rnn_units=64, num_layers=2, rnn_type="lstm"):
         super(RnnModel, self).__init__()
 
         if rnn_type.lower() == "lstm":
             self.rnn = nn.LSTM(
                 input_size=input_size,
                 hidden_size=rnn_units,
-                num_layers=2,
+                num_layers=num_layers,
                 batch_first=True
             )
         else:
             self.rnn = nn.GRU(
                 input_size=input_size,
                 hidden_size=rnn_units,
-                num_layers=2,
+                num_layers=num_layers,
                 batch_first=True
             )
 
         self.output_layer = nn.Linear(rnn_units, 1)
 
     def forward(self, x):
-        x_permuted = x.permute(0, 2, 1)
-        rnn_output, _ = self.rnn(x_permuted)
+        x_permuted = x.permute(0,3,1,2)
+        batch_size = x_permuted.size(0)
+        time_steps = x_permuted.size(1)
+        x_reshaped = x_permuted.reshape(batch_size, time_steps, -1)
+        rnn_output, _ = self.rnn(x_reshaped)
         output = self.output_layer(rnn_output)
+
+        return output.squeeze()
+    
+
+class TransformerEncoderModel(nn.Module):
+    def __init__(self, input_size=256, n_head=4, dim_ff=512, num_layers=3):
+        super(TransformerEncoderModel, self).__init__()
+
+        self.encoder_layer = nn.TransformerEncoderLayer(d_model=input_size, nhead=n_head, dim_feedforward=dim_ff)
+        self.encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=num_layers)
+        self.output_layer = nn.Linear(input_size, 1)
+
+    def forward(self, x):
+        x_permuted = x.permute(0,3,1,2)
+        batch_size = x_permuted.size(0)
+        time_steps = x_permuted.size(1)
+        x_reshaped = x_permuted.reshape(batch_size, time_steps, -1)
+        x_encoded = self.encoder(x_reshaped)
+        output = self.output_layer(x_encoded)
 
         return output.squeeze()
