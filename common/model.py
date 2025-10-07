@@ -3,9 +3,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-class CnnRnnUDSModel(nn.Module):
+class CnnRnnModel(nn.Module):
     def __init__(self, freq_bins=256, time_steps=2000, conv_filters=32, rnn_units=64, rnn_type="lstm"):
-        super(CnnRnnUDSModel, self).__init__()
+        super(CnnRnnModel, self).__init__()
 
         self.cnn_block = nn.Sequential(
             nn.Conv2d(
@@ -48,6 +48,35 @@ class CnnRnnUDSModel(nn.Module):
         x_reshaped = x_permuted.reshape(batch_size, time_steps, -1)
 
         rnn_output, _ = self.rnn(x_reshaped)
+        output = self.output_layer(rnn_output)
+
+        return output.squeeze()
+    
+
+class RnnModel(nn.Module):
+    def __init__(self, input_size=256, rnn_units=64, rnn_type="lstm"):
+        super(RnnModel, self).__init__()
+
+        if rnn_type.lower() == "lstm":
+            self.rnn = nn.LSTM(
+                input_size=input_size,
+                hidden_size=rnn_units,
+                num_layers=2,
+                batch_first=True
+            )
+        else:
+            self.rnn = nn.GRU(
+                input_size=input_size,
+                hidden_size=rnn_units,
+                num_layers=2,
+                batch_first=True
+            )
+
+        self.output_layer = nn.Linear(rnn_units, 1)
+
+    def forward(self, x):
+        x_permuted = x.permute(0, 2, 1)
+        rnn_output, _ = self.rnn(x_permuted)
         output = self.output_layer(rnn_output)
 
         return output.squeeze()
