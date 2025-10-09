@@ -1,5 +1,5 @@
 import numpy as np
-import tqdm
+from tqdm import tqdm
 from torch.utils.data import DataLoader
 from dataset import SpectrogramInferenceDataset
 
@@ -14,8 +14,8 @@ def infer_model(model, label_data, all_data, test_indices, stride=500, window_si
         data = all_data[test_idx]
         up_states_count = np.zeros(data.shape[2])
         overlap_count = np.zeros(data.shape[2])
-        test_dataset = SpectrogramInferenceDataset(data, label)
-        test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False, num_workers=4, multiprocessing_context="fork")
+        test_dataset = SpectrogramInferenceDataset(data, label, window_size=window_size, stride=stride)
+        test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False)
         cnt = 0
         for inputs, labels in tqdm(test_loader):
             inputs, labels = inputs.to(device), labels.to(device).float()

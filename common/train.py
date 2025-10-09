@@ -1,7 +1,7 @@
 from util import EarlyStopping
 import torch
 import torch.nn as nn
-import tqdm
+from tqdm import tqdm
 
 
 def train_model(model, train_loader, val_loader, epochs=200, lr=1e-4, patience=20, path="checkpoint.pth", device="cuda"):
