@@ -4,9 +4,9 @@ sys.path.append("./common")
 import torch
 from torch.utils.data import DataLoader
 from common.dataset import SpectrogramDataset
-from common.infer import infer_model, infer_models
+from common.infer import infer_model
 from common.model import TransformerEncoderModel
-from common.preprocessing import load_data, load_stft, select_data, preprocess
+from common.preprocessing import load_data, load_stft
 from common.train import train_model
 
 
@@ -31,9 +31,9 @@ stride = 500
 num_layers = 3
 input_size = 128
 dim_ff = 256
-epochs = 30
-lr = 1e-4
-patience = 10
+epochs = 100
+lr = 5e-5
+patience = 20
 training_info = {
     "device" : device,
     "window_size" : window_size,
@@ -56,8 +56,6 @@ sys.stdout = open(ckpt_dir + "/log.txt", "w")
 
 _, label_data = load_data(filenames, label_fnames)
 all_data = load_stft(stft_path)
-# all_data = select_data(all_data, used_idx)
-# all_downsampled_data, all_data = preprocess(all_data)
 train_dataset = SpectrogramDataset(all_data, label_data, train_indices, window_size=window_size)
 val_dataset = SpectrogramDataset(all_data, label_data, val_indices, window_size=window_size)
 train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
@@ -69,6 +67,10 @@ print(model)
 train_losses, val_losses, _ = train_model(model, train_loader, val_loader, 
                                        epochs=epochs, lr=lr, patience=patience, path=ckpt_path, device=device)
 all_up_states, up_coins, down_coins = infer_model(model, label_data, all_data, val_indices, stride=stride, window_size=window_size, device=device)
-print(up_coins, down_coins)
+
+for i,idx in enumerate(val_indices):
+    print(f"no.{id_to_no[idx]+1}")
+    print(f" {up_coins[i]}")
+    print(f" {down_coins[i]}")
 
 sys.stdout = STDOUT
