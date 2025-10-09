@@ -1,6 +1,7 @@
 import os
 import sys
 sys.path.append("./common")
+import numpy as np
 import torch
 from torch.utils.data import DataLoader
 from common.dataset import SpectrogramDataset
@@ -24,17 +25,15 @@ used_idx = [[0,940], [0, 1250], [0,700], [140,1020], [0, 510], [0,140], [0,360],
 id_to_no = [0,1,2,3,4,5,6,7,8,10,11,12,13,15,16,17,18,19,22,23,24,25]
 fq_orig = 20000
 fq_aft = 500
-train_indices = list(range(10))
-val_indices = list(range(10, 15))
 device = "cuda" if torch.cuda.is_available() else "cpu"
 window_size = 1000
 stride = 500
 num_layers = 3
 input_size = 128
 dim_ff = 256
-epochs = 100
+epochs = 10
 lr = 5e-5
-patience = 20
+patience = 2
 training_info = {
     "device" : device,
     "window_size" : window_size,
@@ -47,33 +46,40 @@ training_info = {
     "patience" : patience,
     "model" : "transformers",
 }
-ckpt_dir = f"../output/transformers/1"
-if not os.path.exists(ckpt_dir):
-    os.makedirs(ckpt_dir)
-ckpt_path = ckpt_dir + "/checkpoint.pth"
+base_dir = f"../output/transformers/1"
 
 STDOUT = sys.stdout
-sys.stdout = open(ckpt_dir + "/log.txt", "w")
+sys.stdout = open(base_dir + "/log.txt", "w")
 
+print(training_info)
 _, label_data = load_data(filenames, label_fnames)
 all_data = load_stft(stft_path)
-train_dataset = SpectrogramDataset(all_data, label_data, train_indices, window_size=window_size)
-val_dataset = SpectrogramDataset(all_data, label_data, val_indices, window_size=window_size)
-train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
-val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False)
-model = TransformerEncoderModel(num_layers=num_layers, input_size=input_size, dim_ff=dim_ff)
-print(training_info)
-print(model)
+all_up_coins = np.zeros(15)
+all_down_coins = np.zeros(15)
+for i in range(3):
+    train_indices = [j for j in range(12) if (j < i*4) or (j >= (i+1)*4)]
+    val_indices = [j for j in range(12) if (j >= i*4) and (j < (i+1)*4)]
+    train_dataset = SpectrogramDataset(all_data, label_data, train_indices, window_size=window_size)
+    val_dataset = SpectrogramDataset(all_data, label_data, val_indices, window_size=window_size)
+    train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
+    val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False)
+    model = TransformerEncoderModel(num_layers=num_layers, input_size=input_size, dim_ff=dim_ff)
+    print(model)
 
-train_losses, val_losses, _ = train_model(model, train_loader, val_loader, 
-                                       epochs=epochs, lr=lr, patience=patience, path=ckpt_path, device=device)
-all_up_states, up_coins, down_coins = infer_model(model, label_data, all_data, val_indices, stride=stride, window_size=window_size, device=device)
+    ckpt_dir = base_dir + f"/{i+1}"
+    if not os.path.exists(ckpt_dir):
+        os.makedirs(ckpt_dir)
+    ckpt_path = ckpt_dir + "/checkpoint.pth"
+    train_losses, val_losses, _ = train_model(model, train_loader, val_loader, 
+                                            epochs=epochs, lr=lr, patience=patience, path=ckpt_path, device=device)
+    visualize_loss(train_losses, val_losses, f"loss : {i+1}", ckpt_dir+"/loss.png")
+    all_up_states, up_coins, down_coins = infer_model(model, label_data, all_data, val_indices, stride=stride, window_size=window_size, device=device)
+    all_up_coins[i*4:(i+1)*4] = np.array(up_coins)
+    all_down_coins[i*4:(i+1)*4] = np.array(down_coins)
 
-for i,idx in enumerate(val_indices):
-    print(f"no.{id_to_no[idx]+1}")
-    print(f" {up_coins[i]}")
-    print(f" {down_coins[i]}")
-
-visualize_loss(train_losses, val_losses, "loss", ckpt_dir+"/loss.png")
+for i in range(15):
+    print(f"no.{id_to_no[i]+1}")
+    print(f" {all_up_coins[i]}")
+    print(f" {all_down_coins[i]}")
 
 sys.stdout = STDOUT
