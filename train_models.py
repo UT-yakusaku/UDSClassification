@@ -1,5 +1,6 @@
 import os
 import sys
+import pickle
 sys.path.append("./common")
 import numpy as np
 import torch
@@ -31,9 +32,9 @@ stride = 500
 num_layers = 3
 input_size = 128
 dim_ff = 256
-epochs = 10
+epochs = 200
 lr = 5e-5
-patience = 2
+patience = 20
 training_info = {
     "device" : device,
     "window_size" : window_size,
@@ -45,8 +46,11 @@ training_info = {
     "lr" : lr,
     "patience" : patience,
     "model" : "transformers",
+    "data_path" : stft_path
 }
 base_dir = f"../output/transformers/1"
+if not os.path.exists(base_dir):
+    os.makedirs(base_dir)
 
 STDOUT = sys.stdout
 sys.stdout = open(base_dir + "/log.txt", "w")
@@ -57,8 +61,8 @@ all_data = load_stft(stft_path)
 all_up_coins = np.zeros(15)
 all_down_coins = np.zeros(15)
 for i in range(3):
-    train_indices = [j for j in range(12) if (j < i*4) or (j >= (i+1)*4)]
-    val_indices = [j for j in range(12) if (j >= i*4) and (j < (i+1)*4)]
+    train_indices = [j for j in range(15) if (j < i*5) or (j >= (i+1)*5)]
+    val_indices = [j for j in range(15) if (j >= i*5) and (j < (i+1)*5)]
     train_dataset = SpectrogramDataset(all_data, label_data, train_indices, window_size=window_size)
     val_dataset = SpectrogramDataset(all_data, label_data, val_indices, window_size=window_size)
     train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
@@ -73,9 +77,15 @@ for i in range(3):
     train_losses, val_losses, _ = train_model(model, train_loader, val_loader, 
                                             epochs=epochs, lr=lr, patience=patience, path=ckpt_path, device=device)
     visualize_loss(train_losses, val_losses, f"loss : {i+1}", ckpt_dir+"/loss.png")
+    with open(ckpt_dir+"/losses.pkl", "wb") as f:
+        loss_dict = {
+            "train_losses" : train_losses,
+            "val_losses" : val_losses
+        }
+        pickle.dump(loss_dict, f)
     all_up_states, up_coins, down_coins = infer_model(model, label_data, all_data, val_indices, stride=stride, window_size=window_size, device=device)
-    all_up_coins[i*4:(i+1)*4] = np.array(up_coins)
-    all_down_coins[i*4:(i+1)*4] = np.array(down_coins)
+    all_up_coins[i*5:(i+1)*5] = np.array(up_coins)
+    all_down_coins[i*5:(i+1)*5] = np.array(down_coins)
 
 for i in range(15):
     print(f"no.{id_to_no[i]+1}")

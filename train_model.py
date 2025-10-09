@@ -1,5 +1,6 @@
 import os
 import sys
+import pickle
 sys.path.append("./common")
 import torch
 from torch.utils.data import DataLoader
@@ -75,5 +76,12 @@ for i,idx in enumerate(val_indices):
     print(f" {down_coins[i]}")
 
 visualize_loss(train_losses, val_losses, "loss", ckpt_dir+"/loss.png")
+
+with open(ckpt_dir+"/losses.pkl", "wb") as f:
+    loss_dict = {
+        "train_losses" : train_losses,
+        "val_losses" : val_losses
+    }
+    pickle.dump(loss_dict, f)
 
 sys.stdout = STDOUT
