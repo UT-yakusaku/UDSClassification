@@ -4,7 +4,7 @@ import torch.nn as nn
 import tqdm
 
 
-def train_model(model, train_loader, val_loader, epochs=200, lr=1e-4, patience=20, path="checkpoint.pth", device="cpu"):
+def train_model(model, train_loader, val_loader, epochs=200, lr=1e-4, patience=20, path="checkpoint.pth", device="cuda"):
     criterion = nn.BCEWithLogitsLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
     model.to(device)
