@@ -7,14 +7,14 @@ import torch
 from torch.utils.data import DataLoader
 from common.dataset import SpectrogramDataset
 from common.infer import infer_model
-from common.model import TransformerEncoderModel
+from common.model import TransformerEncoderModel, RnnModel
 from common.preprocessing import load_data, load_stft
 from common.train import train_model
 from common.visualize import visualize_loss
 
 
 filenames = ['../RSC/20220729_2_1/20220729_2_1_data.abf', '../RSC/20220825_1_1/20220825_1_1_data.abf', '../RSC/20220925_2_1/20220925_2_1_data.abf', '../RSC/20220822_1_1/20220822_1_1_data.abf', '../RSC/20220922_2_1/20220922_2_1_data.abf', '../RSC/20220714_1_1/20220714_1_1_data.abf', '../RSC/20220723_2_3/20220723_2_3_data.abf', '../RSC/20220824_2_1/20220824_2_1_data.abf', '../RSC/20220925_1_1/20220925_1_1_data.abf', '../RSC/20220827_2_1/20220827_2_1_data.abf', '../RSC/20220921_1_1/20220921_1_1_data.abf', '../RSC/20220727_4_1/20220727_4_1_data.abf', '../RSC/20220928_4_1/20220928_4_1_data.abf', '../RSC/20220923_1_1/20220923_1_1_data.abf', '../RSC/20220912_1_1/20220912_1_1_data.abf', '../RSC/20220925_2_3/20220925_2_3_data.abf', '../RSC/20220824_3_1/20220824_3_1_data.abf', '../RSC/20220729_2_2/20220729_2_2_data.abf', '../RSC/20220926_2_2/20220926_2_2_data.abf', '../RSC/20220728_4_1/20220728_4_1_data.abf', '../RSC/20220724_1_1/20220724_1_1_data.abf', '../RSC/20220713_2_4/20220713_2_4_data.abf', '../RSC/20220723_2_1/20220723_2_1_data.abf', '../RSC/20220925_1_2/20220925_1_2_data.abf', '../RSC/20220714_1_4/20220714_1_4_data.abf', '../RSC/20220915_2_1/20220915_2_1_data.abf', '../RSC/20220928_4_2/20220928_4_2_data.abf']
-stft_path = "../spectrogram/stft_fq64_hcf100.pkl"
+stft_path = "../spectrogram/stft_fq64.pkl"
 label_fnames = []
 for fname in filenames:
     if not os.path.exists(fname[:-4]+"_500_hmm_seg_50.npy"):
@@ -31,6 +31,8 @@ window_size = 1000
 stride = 500
 num_layers = 3
 input_size = 128
+rnn_units = 64
+n_head = 4
 dim_ff = 256
 epochs = 200
 lr = 5e-5
@@ -42,13 +44,15 @@ training_info = {
     "num_layers" : num_layers,
     "input_size" : input_size,
     "dim_ff" : dim_ff,
+    "n_head" : n_head,
+    # "rnn_units" : rnn_units,
     "epochs" : epochs,
     "lr" : lr,
     "patience" : patience,
     "model" : "transformers",
     "data_path" : stft_path
 }
-base_dir = f"../output/transformers/1"
+base_dir = f"../output/transformers/5"
 if not os.path.exists(base_dir):
     os.makedirs(base_dir)
 
@@ -67,7 +71,8 @@ for i in range(3):
     val_dataset = SpectrogramDataset(all_data, label_data, val_indices, window_size=window_size)
     train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False)
-    model = TransformerEncoderModel(num_layers=num_layers, input_size=input_size, dim_ff=dim_ff)
+    # model = RnnModel(num_layers=num_layers, input_size=input_size, rnn_units=rnn_units, rnn_type="gru")
+    model = TransformerEncoderModel(input_size=input_size, n_head=n_head, dim_ff=dim_ff, num_layers=num_layers)
     print(model)
 
     ckpt_dir = base_dir + f"/{i+1}"

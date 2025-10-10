@@ -72,8 +72,8 @@ def infer_models(models, label_data, all_data, test_indices, stride=500, window_
     for i, test_idx in enumerate(test_indices):
         label = label_data[test_idx]
         data = all_data[test_idx]
-        test_dataset = SpectrogramInferenceDataset(data, label)
-        test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False, num_workers=4, multiprocessing_context="fork")
+        test_dataset = SpectrogramInferenceDataset(data, label, window_size=window_size, stride=stride)
+        test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False)
         all_ustates = np.zeros(data.shape[2])
         for model in models:
             model.eval()

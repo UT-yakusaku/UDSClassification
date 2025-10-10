@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+from scipy.signal import stft
 
 
 class EarlyStopping:
@@ -29,4 +30,13 @@ class EarlyStopping:
     def save_checkpoint(self, val_loss, model):
         torch.save(model.state_dict(), self.path)
         self.val_loss_min = val_loss
+
+
+def cal_stft(data, fq=500, num_fq=64):
+    _, _, Zxx = stft(data, fs=fq, nperseg=int(num_fq*5), noverlap=int(num_fq*5)-1)
+    Zxx = Zxx[:num_fq, :len(data)]
+    re_data = np.real(Zxx).astype(np.float32)
+    im_data = np.imag(Zxx).astype(np.float32)
+    result = np.vstack((im_data[None,:,:], re_data[None,:,:]))
+    return result
         
