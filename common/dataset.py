@@ -12,10 +12,10 @@ class SpectrogramDataset(Dataset):
         self.transform = transform
 
     def __len__(self):
-        return len(self.data_indices) * 100
+        return len(self.data_indices) * 2000
     
     def __getitem__(self, idx):
-        data_idx = self.data_indices[idx//100]
+        data_idx = self.data_indices[idx//2000]
         data = self.all_data[data_idx]
         label = self.label_data[data_idx]
 

@@ -1,5 +1,7 @@
+import math
 import numpy as np
 import torch
+import torch.nn as nn
 from scipy.signal import stft
 
 
@@ -39,4 +41,19 @@ def cal_stft(data, fq=500, num_fq=64):
     im_data = np.imag(Zxx).astype(np.float32)
     result = np.vstack((im_data[None,:,:], re_data[None,:,:]))
     return result
+
+
+class PositionalEncoding(nn.Module):
+    def __init__(self, d_model, max_len=5000):
+        super(PositionalEncoding, self).__init__()
+        pe = torch.zeros(max_len, d_model)
+        position = torch.arange(0., max_len).unsqueeze(1)
+        div_term = torch.exp(torch.arange(0., d_model, 2) * -(math.log(10000.0) / d_model))
+        pe[:, 0::2] = torch.sin(position * div_term)
+        pe[:, 1::2] = torch.cos(position * div_term)
+        pe = pe.unsqueeze(0)
+        self.pe = pe
+
+    def forward(self, x):
+        return x + self.pe[:, :x.size(1), :]
         

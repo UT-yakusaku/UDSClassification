@@ -28,7 +28,7 @@ input_size = 128
 rnn_units = 64
 n_head = 4
 dim_ff = 256
-base_dir = f"../output/transformers/5"
+base_dir = f"../output/transformers/7"
 test_indices = list(range(15, 22))
 
 _, label_data = load_data(filenames, label_fnames)

@@ -27,8 +27,8 @@ id_to_no = [0,1,2,3,4,5,6,7,8,10,11,12,13,15,16,17,18,19,22,23,24,25]
 fq_orig = 20000
 fq_aft = 500
 device = "cuda" if torch.cuda.is_available() else "cpu"
-window_size = 1000
-stride = 500
+window_size = 50
+stride = 25
 num_layers = 3
 input_size = 128
 rnn_units = 64
@@ -36,6 +36,8 @@ n_head = 4
 dim_ff = 256
 epochs = 200
 lr = 5e-5
+batch_size = 128
+pe = True
 patience = 20
 training_info = {
     "device" : device,
@@ -45,14 +47,16 @@ training_info = {
     "input_size" : input_size,
     "dim_ff" : dim_ff,
     "n_head" : n_head,
+    "pe" : pe,
     # "rnn_units" : rnn_units,
     "epochs" : epochs,
     "lr" : lr,
+    "batch_size" : batch_size,
     "patience" : patience,
     "model" : "transformers",
-    "data_path" : stft_path
+    "data_path" : stft_path,
 }
-base_dir = f"../output/transformers/5"
+base_dir = f"../output/transformers/8"
 if not os.path.exists(base_dir):
     os.makedirs(base_dir)
 
@@ -69,10 +73,10 @@ for i in range(3):
     val_indices = [j for j in range(15) if (j >= i*5) and (j < (i+1)*5)]
     train_dataset = SpectrogramDataset(all_data, label_data, train_indices, window_size=window_size)
     val_dataset = SpectrogramDataset(all_data, label_data, val_indices, window_size=window_size)
-    train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False)
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
     # model = RnnModel(num_layers=num_layers, input_size=input_size, rnn_units=rnn_units, rnn_type="gru")
-    model = TransformerEncoderModel(input_size=input_size, n_head=n_head, dim_ff=dim_ff, num_layers=num_layers)
+    model = TransformerEncoderModel(input_size=input_size, n_head=n_head, dim_ff=dim_ff, num_layers=num_layers, pe=pe)
     print(model)
 
     ckpt_dir = base_dir + f"/{i+1}"
