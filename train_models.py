@@ -14,18 +14,53 @@ from common.train import train_model
 from common.visualize import visualize_loss
 
 
-filenames = ['../RSC/20220729_2_1/20220729_2_1_data.abf', '../RSC/20220825_1_1/20220825_1_1_data.abf', '../RSC/20220925_2_1/20220925_2_1_data.abf', '../RSC/20220822_1_1/20220822_1_1_data.abf', '../RSC/20220922_2_1/20220922_2_1_data.abf', '../RSC/20220714_1_1/20220714_1_1_data.abf', '../RSC/20220723_2_3/20220723_2_3_data.abf', '../RSC/20220824_2_1/20220824_2_1_data.abf', '../RSC/20220925_1_1/20220925_1_1_data.abf', '../RSC/20220827_2_1/20220827_2_1_data.abf', '../RSC/20220921_1_1/20220921_1_1_data.abf', '../RSC/20220727_4_1/20220727_4_1_data.abf', '../RSC/20220928_4_1/20220928_4_1_data.abf', '../RSC/20220923_1_1/20220923_1_1_data.abf', '../RSC/20220912_1_1/20220912_1_1_data.abf', '../RSC/20220925_2_3/20220925_2_3_data.abf', '../RSC/20220824_3_1/20220824_3_1_data.abf', '../RSC/20220729_2_2/20220729_2_2_data.abf', '../RSC/20220926_2_2/20220926_2_2_data.abf', '../RSC/20220728_4_1/20220728_4_1_data.abf', '../RSC/20220724_1_1/20220724_1_1_data.abf', '../RSC/20220713_2_4/20220713_2_4_data.abf', '../RSC/20220723_2_1/20220723_2_1_data.abf', '../RSC/20220925_1_2/20220925_1_2_data.abf', '../RSC/20220714_1_4/20220714_1_4_data.abf', '../RSC/20220915_2_1/20220915_2_1_data.abf', '../RSC/20220928_4_2/20220928_4_2_data.abf']
-stft_path = "../spectrogram/stft_fq128_hcf100.pkl"
-# spectrogram_path = "../spectrogram/data_500_raw.hdf5"
+# ========== パス設定 ==========
+# データファイルのディレクトリ
+DATA_DIR = "path/to/data"
+# データファイル名のリスト（.abfファイルのパス）
+# 例: ['path/to/data/file1_data.abf', 'path/to/data/file2_data.abf', ...]
+filenames = [
+    os.path.join(DATA_DIR, "file1_data.abf"),
+    os.path.join(DATA_DIR, "file2_data.abf"),
+    # 実際のファイルパスをここに追加してください
+]
+# スペクトログラムファイルのパス（使用しない場合はコメントアウト）
+SPECTROGRAM_DIR = "path/to/spectrogram"
+stft_path = os.path.join(SPECTROGRAM_DIR, "stft.pkl")
+# ラベルファイルの拡張子パターン
+LABEL_SUFFIX = "_label.npy"
+# 出力ディレクトリ
+OUTPUT_DIR = "path/to/output"
+# チェックポイントのサブディレクトリ
+CHECKPOINT_SUBDIR = "transformers"
+# =============================
+
+# ========== データ選択設定 ==========
+# 各データファイルから使用する時間範囲（秒単位）を指定
+# 形式: [[start1, end1], [start2, end2], ...]
+# [start, end]が[0, 0]の場合はそのファイルをスキップ
+# 例: [[0, 940], [0, 1250], [0, 700], ...]
+used_idx = [
+    [0, 0],  # file1_data.abfの使用範囲（秒単位）
+    [0, 0],  # file2_data.abfの使用範囲（秒単位）
+    # 実際の使用範囲をここに追加してください
+]
+
+# データインデックスをID番号にマッピングするリスト
+# 例: [0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, ...]
+# 出力時にid_to_no[idx]+1として使用される
+id_to_no = [
+    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+    # 実際のID番号マッピングをここに追加してください
+]
+# =============================
+
 label_fnames = []
 for fname in filenames:
-    if not os.path.exists(fname[:-4]+"_500_hmm_seg_50.npy"):
+    label_path = fname[:-4] + LABEL_SUFFIX
+    if not os.path.exists(label_path):
         continue
-    label_fnames.append(fname[:-4]+"_500_hmm_seg_50.npy")
-used_idx = [[0,940], [0, 1250], [0,700], [140,1020], [0, 510], [0,140], [0,360], [0,1230], [0,1210], 
-            [0,0], [0,980], [0,900], [0,920], [0, 920], [0,0], [30,710], [50, 1180], [130,870],
-            [0,400], [50,740], [0,0], [0,0], [0,830], [0,230], [0,790], [0,540], [0,0]]
-id_to_no = [0,1,2,3,4,5,6,7,8,10,11,12,13,15,16,17,18,19,22,23,24,25]
+    label_fnames.append(label_path)
 fq_orig = 20000
 fq_aft = 500
 num_fq = 128
@@ -66,12 +101,12 @@ training_info = {
     "data_path" : stft_path,
     # "data_path" : spectrogram_path,
 }
-base_dir = f"../output/stft_transformers/6"
+base_dir = os.path.join(OUTPUT_DIR, CHECKPOINT_SUBDIR)
 if not os.path.exists(base_dir):
     os.makedirs(base_dir)
 
 STDOUT = sys.stdout
-sys.stdout = open(base_dir + "/log.txt", "w")
+sys.stdout = open(os.path.join(base_dir, "log.txt"), "w")
 
 print(training_info)
 all_data, label_data = load_data(filenames, label_fnames)
@@ -95,15 +130,15 @@ for i in range(3):
     print(model)
     model.to(device)
 
-    ckpt_dir = base_dir + f"/{i+1}"
+    ckpt_dir = os.path.join(base_dir, str(i+1))
     if not os.path.exists(ckpt_dir):
         os.makedirs(ckpt_dir)
-    ckpt_path = ckpt_dir + "/checkpoint.pth"
+    ckpt_path = os.path.join(ckpt_dir, "checkpoint.pth")
     train_losses, val_losses, _ = train_model(model, train_loader, val_loader, 
                                              epochs=epochs, lr=lr, patience=patience,
                                              weight_decay=weight_decay, optimizer_mode=optimizer_mode, path=ckpt_path, device=device)
-    visualize_loss(train_losses, val_losses, f"loss : {i+1}", ckpt_dir+"/loss.png")
-    with open(ckpt_dir+"/losses.pkl", "wb") as f:
+    visualize_loss(train_losses, val_losses, f"loss : {i+1}", os.path.join(ckpt_dir, "loss.png"))
+    with open(os.path.join(ckpt_dir, "losses.pkl"), "wb") as f:
         loss_dict = {
             "train_losses" : train_losses,
             "val_losses" : val_losses
@@ -114,7 +149,10 @@ for i in range(3):
     all_down_coins[i*5:(i+1)*5] = np.array(down_coins)
 
 for i in range(15):
-    print(f"no.{id_to_no[i]+1}")
+    if i < len(id_to_no):
+        print(f"no.{id_to_no[i]+1}")
+    else:
+        print(f"no.{i+1}")
     print(f" {all_up_coins[i]}")
     print(f" {all_down_coins[i]}")
 

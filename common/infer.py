@@ -1,7 +1,7 @@
 import numpy as np
 from tqdm import tqdm
 from torch.utils.data import DataLoader
-from dataset import SpectrogramInferenceDataset, StftInferenceDataset
+from common.dataset import SpectrogramInferenceDataset, StftInferenceDataset
 
 
 def infer_model(model, label_data, all_data, test_indices, num_fq=128, stride=500, window_size=2000, fs=500, device="cuda"):
