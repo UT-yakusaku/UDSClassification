@@ -2,8 +2,8 @@ import math
 import numpy as np
 import torch
 import torch.nn as nn
-from scipy.signal import stft
 import pywt
+from scipy.signal import stft
 
 
 class EarlyStopping:

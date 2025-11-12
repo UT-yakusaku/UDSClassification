@@ -1,7 +1,7 @@
-import pyabf
-import h5py
 import pickle
 import numpy as np
+import pyabf
+import h5py
 from scipy.signal import butter, filtfilt
 from scipy.stats import zscore
 

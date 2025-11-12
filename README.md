@@ -1,14 +1,14 @@
 # UDSClassification
 
-This repository contains the implementation of deep learning models for Up-Down States (UDS) classification. The code provides tools for training and evaluating models that classify UDS from LFP data (ABF files).
+This repository contains the implementation of deep learning models for Up-Down States (UDS) classification. The code provides tools for training and evaluating models that classify UDS from local field potential (LFP) data (ABF files).
 
 ## Overview
 
 This implementation provides deep learning models for classifying UDS from LFPs. The main features include:
 
 - Deep learning-based UDS classification
-- Support for multiple model architectures (Transformer, CNN-RNN)
-- Data preprocessing (downsampling, filtering, STFT transformation)
+- Support for multiple model architectures (CNN + RNN, Transformer)
+- Data preprocessing (downsampling, filtering, wavelet transformation)
 - Model training and evaluation
 - Cross-validation for model assessment
 
@@ -41,7 +41,7 @@ pip install torch torchvision torchaudio --index-url https://download.pytorch.or
 
 ### Data Format
 
-- **Data files**: ABF format (Axon Binary Format)
+- **Data files**: ABF format (.abf)
 - **Label files**: NumPy array format (.npy)
 
 ### Directory Structure
@@ -103,7 +103,7 @@ python train_model.py
 
 **Configuration parameters**:
 - Data file paths
-- Spectrogram file paths (if using pre-computed STFT data)
+- Spectrogram file paths (if using pre-computed spectrogram data)
 - Output directory
 - Model hyperparameters (number of layers, input size, learning rate, etc.)
 - Training/validation data indices
@@ -119,7 +119,7 @@ python train_models.py
 **Features**:
 - Performs 3-fold cross-validation
 - Trains separate models for each fold
-- Computes STFT from raw data (does not use pre-computed STFT files)
+- Computes time-frequency representations from raw data using STFT
 
 ### 3. Model Evaluation
 
@@ -146,7 +146,7 @@ OUTPUT_DIR = "path/to/output"
 # Checkpoint subdirectory
 CHECKPOINT_SUBDIR = "transformers"
 
-# Spectrogram file path (if used)
+# Spectrogram file path (if using pre-computed spectrograms)
 SPECTROGRAM_DIR = "path/to/spectrogram"
 stft_path = os.path.join(SPECTROGRAM_DIR, "stft.pkl")
 ```
@@ -197,7 +197,7 @@ The input spectrogram is reshaped into sequences of feature vectors. The Transfo
 
 ### Data Loading
 
-Local field potential (LFP) data are loaded from ABF files using the `pyabf` library. Label files containing Up-Down state annotations are loaded as NumPy arrays (.npy format). The data loading process extracts channel 1 from the ABF files, which corresponds to the LFP signal.
+LFP data are loaded from ABF files using the `pyabf` library. Label files containing UDS annotations are loaded as NumPy arrays (.npy format). The data loading process extracts channel 1 from the ABF files, which corresponds to the LFP signal.
 
 ### Time Range Selection
 
@@ -215,13 +215,13 @@ A second-order Butterworth bandpass filter is applied to the downsampled data. T
 
 Each data segment is normalized using z-score normalization, where the mean is subtracted and the result is divided by the standard deviation. This normalization step standardizes the data distribution and improves training stability.
 
-### STFT Transformation
-
-Short-Time Fourier Transform (STFT) is computed to obtain time-frequency representations of the signals. The STFT parameters are configured to yield a specified number of frequency bins (default: 128). The real and imaginary parts of the STFT coefficients are treated as separate channels in the input representation.
-
 ### Spectrogram Computation
 
-Alternatively, spectrograms can be computed using continuous wavelet transform (CWT) with the complex Morlet wavelet (cmor1.5-2). The wavelet transform provides time-frequency localization and is computed across logarithmically spaced frequency scales. Similar to STFT, the real and imaginary parts of the wavelet coefficients are used as separate input channels.
+Spectrograms are computed using continuous wavelet transform (CWT) with the complex Morlet wavelet (cmor1.5-2). The wavelet transform provides time-frequency localization and is computed across logarithmically spaced frequency scales. The frequency scales are logarithmically spaced between the low cutoff frequency (0.1 Hz) and high cutoff frequency (200 Hz). The real and imaginary parts of the wavelet coefficients are treated as separate channels in the input representation.
+
+### STFT Transformation
+
+Alternatively, time-frequency representations can be obtained using Short-Time Fourier Transform (STFT). The STFT parameters are configured to yield a specified number of frequency bins (default: 128). The real and imaginary parts of the STFT coefficients are treated as separate channels in the input representation.
 
 ## Training Procedure
 
@@ -239,9 +239,9 @@ Early stopping is implemented to prevent overfitting. Training is terminated if 
 
 ### Evaluation Metrics
 
-Model performance is evaluated using coincidence rates, which measure the agreement between predicted and ground truth Up-Down states. Two coincidence rates are computed:
-- Up-state coincidence: Fraction of time points where both predicted and ground truth indicate up states, relative to all time points where at least one indicates an up state
-- Down-state coincidence: Fraction of time points where both predicted and ground truth indicate down states, relative to all time points where at least one indicates a down state
+Model performance is evaluated using coincidence index (CoIn; Mukovski et al., 2007), which measure the agreement between predicted and ground truth Up-Down states. Two CoIns are computed:
+- Up-state CoIn: Fraction of time points where both predicted and ground truth indicate up states, relative to all time points where at least one indicates an up state
+- Down-state CoIn: Fraction of time points where both predicted and ground truth indicate down states, relative to all time points where at least one indicates a down state
 
 ## Inference
 

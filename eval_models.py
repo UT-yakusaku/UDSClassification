@@ -83,7 +83,11 @@ for i in range(3):
     model.load_state_dict(torch.load(ckpt_path))
     model.to(device)
     models.append(model)
-all_up_states, up_coins, down_coins = infer_models(models, label_data, all_data, test_indices, num_fq=num_fq, stride=stride, window_size=window_size, fs=fq_aft, device=device)
+all_up_states, up_coins, down_coins = infer_models(
+    models, label_data, all_data, test_indices,
+    num_fq=num_fq, stride=stride, window_size=window_size,
+    fs=fq_aft, device=device
+)
 coins = {
     "up" : up_coins,
     "down" : down_coins

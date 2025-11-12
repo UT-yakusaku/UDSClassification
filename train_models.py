@@ -64,8 +64,7 @@ for fname in filenames:
 fq_orig = 20000
 fq_aft = 500
 num_fq = 128
-# device = "cuda" if torch.cuda.is_available() else "cpu"
-device = "cuda"
+device = "cuda" if torch.cuda.is_available() else "cpu"
 window_size = 50
 stride = 25
 num_layers = 3
@@ -134,9 +133,12 @@ for i in range(3):
     if not os.path.exists(ckpt_dir):
         os.makedirs(ckpt_dir)
     ckpt_path = os.path.join(ckpt_dir, "checkpoint.pth")
-    train_losses, val_losses, _ = train_model(model, train_loader, val_loader, 
-                                             epochs=epochs, lr=lr, patience=patience,
-                                             weight_decay=weight_decay, optimizer_mode=optimizer_mode, path=ckpt_path, device=device)
+    train_losses, val_losses, _ = train_model(
+        model, train_loader, val_loader,
+        epochs=epochs, lr=lr, patience=patience,
+        weight_decay=weight_decay, optimizer_mode=optimizer_mode,
+        path=ckpt_path, device=device
+    )
     visualize_loss(train_losses, val_losses, f"loss : {i+1}", os.path.join(ckpt_dir, "loss.png"))
     with open(os.path.join(ckpt_dir, "losses.pkl"), "wb") as f:
         loss_dict = {
@@ -144,7 +146,10 @@ for i in range(3):
             "val_losses" : val_losses
         }
         pickle.dump(loss_dict, f)
-    all_up_states, up_coins, down_coins = infer_model(model, label_data, all_data, val_indices, num_fq=num_fq, stride=stride, window_size=window_size, device=device)
+    all_up_states, up_coins, down_coins = infer_model(
+        model, label_data, all_data, val_indices,
+        num_fq=num_fq, stride=stride, window_size=window_size, device=device
+    )
     all_up_coins[i*5:(i+1)*5] = np.array(up_coins)
     all_down_coins[i*5:(i+1)*5] = np.array(down_coins)
 

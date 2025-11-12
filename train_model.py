@@ -102,9 +102,14 @@ model = TransformerEncoderModel(num_layers=num_layers, input_size=input_size, di
 print(training_info)
 print(model)
 
-train_losses, val_losses, _ = train_model(model, train_loader, val_loader, 
-                                       epochs=epochs, lr=lr, patience=patience, path=ckpt_path, device=device)
-all_up_states, up_coins, down_coins = infer_model(model, label_data, all_data, val_indices, stride=stride, window_size=window_size, device=device)
+train_losses, val_losses, _ = train_model(
+    model, train_loader, val_loader,
+    epochs=epochs, lr=lr, patience=patience, path=ckpt_path, device=device
+)
+all_up_states, up_coins, down_coins = infer_model(
+    model, label_data, all_data, val_indices,
+    stride=stride, window_size=window_size, device=device
+)
 
 for i, idx in enumerate(val_indices):
     if idx < len(id_to_no):
