@@ -4,9 +4,13 @@ import torch.nn as nn
 from tqdm import tqdm
 
 
-def train_model(model, train_loader, val_loader, epochs=200, lr=1e-4, patience=20, path="checkpoint.pth", device="cuda"):
+def train_model(model, train_loader, val_loader, epochs=200, lr=1e-4, patience=20, weight_decay=0, optimizer_mode="adam", path="checkpoint.pth", device="cuda"):
     criterion = nn.BCEWithLogitsLoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+    if optimizer_mode.lower() == "adam":
+        optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
+    elif optimizer_mode.lower() == "adamw":
+        optimizer = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
+    print(optimizer)
     model.to(device)
     train_losses = []
     val_losses = []

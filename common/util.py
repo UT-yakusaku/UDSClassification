@@ -3,6 +3,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 from scipy.signal import stft
+import pywt
 
 
 class EarlyStopping:
@@ -35,7 +36,8 @@ class EarlyStopping:
 
 
 def cal_stft(data, fq=500, num_fq=64):
-    _, _, Zxx = stft(data, fs=fq, nperseg=int(num_fq*5), noverlap=int(num_fq*5)-1)
+    nperseg = min(len(data), int(num_fq*5))
+    _, _, Zxx = stft(data, fs=fq, nperseg=nperseg, noverlap=nperseg-1)
     Zxx = Zxx[:num_fq, :len(data)]
     re_data = np.real(Zxx).astype(np.float32)
     im_data = np.imag(Zxx).astype(np.float32)
@@ -43,8 +45,21 @@ def cal_stft(data, fq=500, num_fq=64):
     return result
 
 
+def cal_spectrogram(data, fs=500, num_fq=256):
+    lcf, hcf = 0.1, 200
+    fq = np.exp(np.linspace(np.log(lcf), np.log(hcf), num_fq))
+
+    Fc = pywt.central_frequency("cmor1.5-2")
+    scl = fs * Fc / fq
+    coef, _ = pywt.cwt(data, scl, "cmor1.5-2")
+    re_data = np.real(coef).astype(np.float32)
+    im_data = np.imag(coef).astype(np.float32)
+    result = np.vstack((im_data[None,:,:], re_data[None,:,:]))
+    return result
+
+
 class PositionalEncoding(nn.Module):
-    def __init__(self, d_model, max_len=5000):
+    def __init__(self, d_model, max_len=5000, device="cuda"):
         super(PositionalEncoding, self).__init__()
         pe = torch.zeros(max_len, d_model)
         position = torch.arange(0., max_len).unsqueeze(1)
@@ -52,6 +67,7 @@ class PositionalEncoding(nn.Module):
         pe[:, 0::2] = torch.sin(position * div_term)
         pe[:, 1::2] = torch.cos(position * div_term)
         pe = pe.unsqueeze(0)
+        pe = pe.to(device)
         self.pe = pe
 
     def forward(self, x):

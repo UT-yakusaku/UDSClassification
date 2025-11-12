@@ -87,12 +87,12 @@ class RnnModel(nn.Module):
     
 
 class TransformerEncoderModel(nn.Module):
-    def __init__(self, input_size=256, n_head=4, dim_ff=512, num_layers=3, max_len=2000, pe=False):
+    def __init__(self, input_size=256, n_head=4, dim_ff=512, num_layers=3, max_len=2000, pe=False, device="cuda"):
         super(TransformerEncoderModel, self).__init__()
 
         self.pe = pe
         if self.pe:
-            self.pe_layer = PositionalEncoding(d_model=input_size, max_len=max_len)
+            self.pe_layer = PositionalEncoding(d_model=input_size, max_len=max_len, device=device)
         self.encoder_layer = nn.TransformerEncoderLayer(d_model=input_size, nhead=n_head, dim_feedforward=dim_ff, batch_first=True)
         self.encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=num_layers)
         self.output_layer = nn.Linear(input_size, 1)
