@@ -153,6 +153,13 @@ stft_path = os.path.join(SPECTROGRAM_DIR, "stft.pkl")
 
 ## Model Architectures
 
+### Hidden Markov Model (HMM)
+
+UDS classification was also performed using a Hidden Markov Model (HMM) implemented with the `hmmlearn` library. The HMM models the temporal dynamics of UDS as hidden states with observable features derived from the preprocessed LFP signals.
+
+**Implementation details**:
+The HMM parameters (emission probabilities and transition probabilities) are initialized using values obtained from a Gaussian Mixture Model (GMM). Specifically, the mean and variance values estimated from the GMM are used as initial values for the HMM emission parameters. This initialization strategy provides a principled starting point for the HMM training process and can improve convergence compared to random initialization.
+
 ### CNN + RNN Model (CnnRnnModel)
 
 The CnnRnnModel combines convolutional neural network (CNN) and recurrent neural network (RNN) components. The model first extracts features from spectrograms using 2D convolutions, then processes temporal sequences using LSTM or GRU units.
@@ -192,13 +199,6 @@ The TransformerEncoderModel is based on the Transformer encoder architecture. Th
 
 **Implementation details**:
 The input spectrogram is reshaped into sequences of feature vectors. The Transformer encoder processes these sequences, and the output is passed through a linear layer to produce binary predictions for each time step.
-
-### Hidden Markov Model (HMM)
-
-UDS classification was also performed using a Hidden Markov Model (HMM) implemented with the `hmmlearn` library. The HMM models the temporal dynamics of UDS as hidden states with observable features derived from the preprocessed LFP signals.
-
-**Implementation details**:
-The HMM parameters (emission probabilities and transition probabilities) are initialized using values obtained from a Gaussian Mixture Model (GMM). Specifically, the mean and variance values estimated from the GMM are used as initial values for the HMM emission parameters. This initialization strategy provides a principled starting point for the HMM training process and can improve convergence compared to random initialization.
 
 ## Data Preprocessing
 
